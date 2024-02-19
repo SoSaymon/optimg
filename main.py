@@ -3,7 +3,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from utils.get_file_type import get_file_type
 from utils.ocr import perform_ocr
-from utils.save_files import scramble_filename, save_file
+from utils.validate_file_size import validate_file_size
 
 app = FastAPI()
 
@@ -24,7 +24,14 @@ app.add_middleware(
 
 @app.post("/upload")
 async def upload(file: UploadFile = File(...), language: str = "pol"):
-    filename = scramble_filename(file.filename)
-    await save_file(file, filename)
-    text = await perform_ocr(f"files/{file.filename}", language)
-    return {"filename": filename, "text": text}
+    allowed_file_types = ["image/jpeg", "image/png", "image/jpg"]
+    file_type = get_file_type(file.file.read())
+
+    if file_type not in allowed_file_types:
+        raise HTTPException(status_code=400, detail="File type not allowed")
+
+    max_file_size = 10 * 1024 * 1024
+    validate_file_size(file.file.read(), max_file_size)
+
+    text = await perform_ocr(file, language)
+    return {"text": text}
