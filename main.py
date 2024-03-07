@@ -11,6 +11,8 @@ origins = [
     "http://localhost:3000",
     "http://localhost",
     "http://localhost:8000",
+    "http://157.230.98.253:8000",
+    "http://api.airevista.studio:8080"
 ]
 
 app.add_middleware(
@@ -32,6 +34,7 @@ async def upload(file: UploadFile = File(...), language: str = "pol"):
 
     max_file_size = 10 * 1024 * 1024
     validate_file_size(file.file.read(), max_file_size)
+    file.file.seek(0)
 
     text = await perform_ocr(file, language)
     return {"text": text}
